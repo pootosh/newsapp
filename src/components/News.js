@@ -1,92 +1,159 @@
 import React, { Component } from "react";
 import NewsItem from "./NewsItem";
+import Loading from "./Loading";
+import PropTypes from 'prop-types';
+
 
 export class News extends Component {
-  article = [
-    {
-      source: { id: "bbc-sport", name: "BBC Sport" },
-      author: "BBC Sport",
-      title: "Shane Warne memorial - watch & follow updates",
-      description:
-        "Watch live coverage and follow text updates and tributes from the state memorial for Australian cricket legend Shane Warne at the Melbourne Cricket Ground.",
-      url: "http://www.bbc.co.uk/sport/live/cricket/60916236",
-      urlToImage:
-        "https:////m.files.bbci.co.uk/modules/bbc-morph-sport-seo-meta/1.22.0/images/bbc-sport-logo.png",
-      publishedAt: "2022-03-30T08:22:26.498888Z",
-      content:
-        "Former England bowler and BBC cricket presenter Isa Guha, who became a colleague of Warne's in the commentary box: \"It has been a strange few weeks - a lot of shock and then we did our own tribute at… [+396 chars]",
-    },
-    {
-      source: { id: "espn-cric-info", name: "ESPN Cric Info" },
-      author: null,
-      title:
-        "PCB hands Umar Akmal three-year ban from all cricket | ESPNcricinfo.com",
-      description:
-        "Penalty after the batsman pleaded guilty to not reporting corrupt approaches | ESPNcricinfo.com",
-      url: "http://www.espncricinfo.com/story/_/id/29103103/pcb-hands-umar-akmal-three-year-ban-all-cricket",
-      urlToImage:
-        "https://a4.espncdn.com/combiner/i?img=%2Fi%2Fcricket%2Fcricinfo%2F1099495_800x450.jpg",
-      publishedAt: "2020-04-27T11:41:47Z",
-      content:
-        "Umar Akmal's troubled cricket career has hit its biggest roadblock yet, with the PCB handing him a ban from all representative cricket for three years after he pleaded guilty of failing to report det… [+1506 chars]",
-    },
-    {
-      source: { id: "espn-cric-info", name: "ESPN Cric Info" },
-      author: null,
-      title:
-        "What we learned from watching the 1992 World Cup final in full again | ESPNcricinfo.com",
-      description:
-        "Wides, lbw calls, swing - plenty of things were different in white-ball cricket back then | ESPNcricinfo.com",
-      url: "http://www.espncricinfo.com/story/_/id/28970907/learned-watching-1992-world-cup-final-full-again",
-      urlToImage:
-        "https://a4.espncdn.com/combiner/i?img=%2Fi%2Fcricket%2Fcricinfo%2F1219926_1296x729.jpg",
-      publishedAt: "2020-03-30T15:26:05Z",
-      content:
-        "Last week, we at ESPNcricinfo did something we have been thinking of doing for eight years now: pretend-live ball-by-ball commentary for a classic cricket match. We knew the result, yes, but we tried… [+6823 chars]",
-    },
-    {
-      source: { id: "espn-cric-info", name: "ESPN Cric Info" },
-      author: null,
-      title:
-        "What we learned from watching the 1992 World Cup final in full again | ESPNcricinfo.com",
-      description:
-        "Wides, lbw calls, swing - plenty of things were different in white-ball cricket back then | ESPNcricinfo.com",
-      url: "http://www.espncricinfo.com/story/_/id/28970907/learned-watching-1992-world-cup-final-full-again",
-      urlToImage:
-        "https://a4.espncdn.com/combiner/i?img=%2Fi%2Fcricket%2Fcricinfo%2F1219926_1296x729.jpg",
-      publishedAt: "2020-03-30T15:26:05Z",
-      content:
-        "Last week, we at ESPNcricinfo did something we have been thinking of doing for eight years now: pretend-live ball-by-ball commentary for a classic cricket match. We knew the result, yes, but we tried… [+6823 chars]",
-    },
-  ];
+
+static defaultProps = {
+  country:"in",
+  category:"general",
+
+}
+
+static propTypes = {
+  country: PropTypes.string,
+  category: PropTypes.string,
+}
 
   constructor() {
     super();
     this.state = {
-      article: this.article,
-      loading: true,
+      article: [],
+      loading: false,
+      page: 1,
     };
   }
 
+  async updateOnClick(){
+    this.setState({ loading: true });
+    
+    let url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=1a304df361ae45e08b7c4510e1c8e342&page=${
+      this.state.page
+    }&pageSize=${this.props.pageSize}`;
+    
+    let data = await fetch(url);
+   
+    let parsedData = await data.json();
+    
+    await this.setState({
+      article: parsedData.articles,
+      totalArticles: parsedData.totalResults,
+      loading: false,
+    });
+  }
+
+  async componentDidMount() {
+    // this.setState({ loading: true, page: 1 });
+    // console.log("Component Mounted ",this.state.page)
+    // let url =
+    //   `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=1a304df361ae45e08b7c4510e1c8e342&page=${this.state.page}`;
+    // let data = await fetch(url);
+    // console.log("After fetch ",this.state.page)
+    // let parsedData = await data.json();
+    // let newsItemPerPage = parsedData.articles.length;
+    // this.setState({
+    //   article: parsedData.articles,
+    //   noOfPages: Math.ceil(parsedData.totalResults / newsItemPerPage),
+    //   loading: false,
+    // });
+
+      
+    this.updateOnClick();
+  }
+  
+  
+
+  handleOnClickPrevious = async () => {
+    // this.setState({ loading: true });
+    // let url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=1a304df361ae45e08b7c4510e1c8e342&page=${
+    //   this.state.page - 1
+    // }`;
+    // let data = await fetch(url);
+    // let parsedData = await data.json();
+    // this.setState({
+    //   page: this.state.page - 1,
+    //   article: parsedData.articles,
+    //   loading: false,
+    // });
+    let pagePrev =  this.state.page-1;
+    await this.setState({page : pagePrev});
+    
+    this.updateOnClick()
+  };
+
+  handleOnClickNext = async () => {
+    // this.setState({ loading: true });
+    // let url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=1a304df361ae45e08b7c4510e1c8e342&page=${
+    //   this.state.page + 1
+    // }`;
+    // let data = await fetch(url);
+    // let parsedData = await data.json();
+
+    // this.setState({
+    //   page: this.state.page + 1,
+    //   article: parsedData.articles,
+    //   loading: false,
+    // });
+    let pageNext = this.state.page+1;
+    await this.setState({page : pageNext});
+    this.updateOnClick()
+  };
+
+  i = 1;
+  defaultImageUrl = "https://www.udayavani.com/wp-content/uploads/2022/07/galaxy-620x361.jpg"
   render() {
     return (
       <div className="container my-2">
+        <div className="text-center" style={{margin:"20px 0px"}}>
         <h4>Top Headlines</h4>
+        </div>
+        
+        {this.state.loading && <Loading />}
 
-        <div className="row my-3 align-items-center">
-          {this.state.article.map((element) => {
+        <div className="row my-3">
+          {!this.state.loading && this.state.article.map((element) => {
             return (
-              <div className="col-md-4" key = {element.url}>
+              <div className="col-md-4" key={this.i++}>
                 <NewsItem
-                  
-                  title={element.title}
-                  description={element.description}
-                  imageUrl={element.urlToImage}
-                  newsUrl = {element.url}
+                  title={element.title ? element.title : ""}
+                  description={element.description ? element.description : ""}
+                  imageUrl={
+                    !element.urlToImage
+                      ? this.defaultImageUrl
+                      : element.urlToImage
+                  }
+                  newsUrl={element.url ? element.url : ""}
+                  author = {element.author?element.author : ""}
                 />
               </div>
             );
           })}
+          <div className="d-flex justify-content-between">
+            <div className="p-2">
+              <button
+                disabled={this.state.page <= 1}
+                onClick={this.handleOnClickPrevious}
+                type="button"
+                className="btn btn-info"
+              >
+                &larr; Previous
+              </button>
+            </div>
+
+            <div className="p-2">
+              <button
+                type="button"
+                disabled={this.state.page === Math.floor(this.state.totalArticles/this.props.pageSize) }
+                onClick={this.handleOnClickNext}
+                className="btn btn-info"
+              >
+                
+                Next &rarr;
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
