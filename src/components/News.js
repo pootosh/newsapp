@@ -1,111 +1,131 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import NewsItem from "./NewsItem";
 import Loading from "./Loading";
 import PropTypes from "prop-types";
 import InfiniteScroll from "react-infinite-scroll-component";
 
-export class News extends Component {
-  static defaultProps = {
-    country: "in",
-    category: "general",
+const News = (props) => {
+  const [article, setArticle] = useState([]);
+  // const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalArticles, setTotalArticles] = useState(0);
+  const [status, setStatus] = useState(true);
+
+  const updateNews = async () => {
+    props.setProgress(0);
+    // setLoading(true);
+
+    let url = `https://newsapi.org/v2/top-headlines?country=${props.country}&category=${props.category}&apiKey=${props.apiKey}&page=${page}&pageSize=${props.pageSize}`;
+    try {
+      let data = await fetch(url);
+      let parsedData = await data.json();
+
+      setArticle(parsedData.articles);
+      setTotalArticles(parsedData.totalResults);
+      setStatus(true);
+    } catch (error) {
+      setStatus(false);
+    } finally {
+      // setLoading(false);
+    }
+
+    props.setProgress(100);
   };
 
-  static propTypes = {
-    country: PropTypes.string,
-    category: PropTypes.string,
-  };
-
-  constructor(props) {
-    
-    super();
-    
-    this.state = {
-      article: [],
-      loading: false,
-      page: 1,
-      
+  useEffect(() => {
+    return () => {
+      updateNews();
     };
-    
-  }
+  });
 
-  async updateNews() {
-    this.props.setProgress(0)
-    this.setState({ loading: true });
+  const fetchMoreData = async () => {
+    props.setProgress(0);
+    let pageNext = page + 1;
 
-    let url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=1a304df361ae45e08b7c4510e1c8e342&page=${this.state.page}&pageSize=${this.props.pageSize}`;
-    let data = await fetch(url);
-    let parsedData = await data.json();
-    await this.setState({
-      article: parsedData.articles,
-      totalArticles: parsedData.totalResults,
-      loading: false,
-    });
-    this.props.setProgress(100)
-  }
+    setPage(pageNext);
 
-  async componentDidMount() {
-    this.updateNews();
-  }
+    let url = `https://newsapi.org/v2/top-headlines?country=${props.country}&category=${props.category}&apiKey=${props.apiKey}&page=${page}&pageSize=${props.pageSize}`;
+    try {
+      let data = await fetch(url);
+      let parsedData = await data.json();
+      setArticle(article.concat(parsedData.articles));
+      setStatus(true);
+    } catch (error) {
+      console.log(error);
+      setStatus(false);
+    } finally {
+      // setLoading(false);
+    }
 
-
-  fetchMoreData = async () => {
-    this.props.setProgress(0)
-    let pageNext = this.state.page + 1;
-    this.setState({ page: pageNext });
-    let url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=1a304df361ae45e08b7c4510e1c8e342&page=${this.state.page}&pageSize=${this.props.pageSize}`;
-    let data = await fetch(url);
-    let parsedData = await data.json();
-    await this.setState({
-      article: this.state.article.concat(parsedData.articles),
-      totalArticles: parsedData.totalResults,
-      loading: false,
-    });
-    this.props.setProgress(100)
+    props.setProgress(100);
   };
 
-  i = 1;
-  defaultImageUrl =
+  let i = 1;
+  let defaultImageUrl =
     "https://www.udayavani.com/wp-content/uploads/2022/07/galaxy-620x361.jpg";
-  render() {
-    return (
-      <div className="my-2">
-        <div className="text-center" style={{ margin: "20px 0px" }}>
-          <h4>Top Headlines</h4>
-        </div>
 
+  return (
+    <div className="my-2">
+      <div
+        className="text-center"
+        style={{ margin: "20px 0px", marginTop: "70px" }}
+      >
+        <h4>Top Headlines</h4>
+      </div>
+      {!status && (
         <InfiniteScroll
-          dataLength={this.state.article.length}
-          next={this.fetchMoreData}
+          dataLength={article.length}
+          next={fetchMoreData}
           //To put endMessage and loader to the top.
-          
-          hasMore={this.state.article.length <= this.state.totalArticles}
+
+          hasMore={article.length <= totalArticles}
           loader={<Loading />}
           scrollableTarget="scrollableDiv"
         >
           <div className="row my-3">
-            {this.state.article.map((element) => {
-              return (
-                <div className="container col-md-4" key={this.i++}>
-                  <NewsItem
-                    title={element.title ? element.title : ""}
-                    description={element.description ? element.description : ""}
-                    imageUrl={
-                      !element.urlToImage
-                        ? this.defaultImageUrl
-                        : element.urlToImage
-                    }
-                    newsUrl={element.url ? element.url : ""}
-                    author={element.author ? element.author : ""}
-                  />
-                </div>
-              );
-            })}
-            
+            {status ? (
+              article.map((element) => {
+                return (
+                  <div className="container col-md-4" key={i++}>
+                    <NewsItem
+                      title={element.title ? element.title : ""}
+                      description={
+                        element.description ? element.description : ""
+                      }
+                      imageUrl={
+                        !element.urlToImage
+                          ? defaultImageUrl
+                          : element.urlToImage
+                      }
+                      newsUrl={element.url ? element.url : ""}
+                      author={element.author ? element.author : ""}
+                    />
+                  </div>
+                );
+              })
+            ) : (
+              <h6>
+                You have made too many requests recently. Developer accounts are
+                limited to 100 requests over a 24 hour period (50 requests
+                available every 12 hours). Please upgrade to a paid plan if you
+                need more requests.
+              </h6>
+            )}
           </div>
         </InfiniteScroll>
-      </div>
-    );
-  }
-}
+      )}
+    </div>
+  );
+};
+
+News.defaultProps = {
+  country: "in",
+  category: "general",
+};
+
+News.propTypes = {
+  country: PropTypes.string,
+  category: PropTypes.string,
+};
 
 export default News;
